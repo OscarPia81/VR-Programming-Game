@@ -67,16 +67,20 @@ public class BreakDetectCollider : MonoBehaviour
 
         parentWhile.next = otherCode;
 
+        Vector3 worldPos = otherCode.transform.position;
+
         Transform backTransform = parentWhile.transform.Find("Back");
 
         if (backTransform != null)
         {
-            otherCode.transform.SetParent(backTransform, false);
+            otherCode.transform.SetParent(backTransform, true);
         }
         else
         {
-            otherCode.transform.SetParent(parentWhile.transform, false);
+            otherCode.transform.SetParent(parentWhile.transform, true);
         }
+
+        otherCode.transform.position = worldPos;
 
         hasConnected = true;
         StartCoroutine(SmoothConnect(parentWhile, otherCode));
@@ -90,8 +94,8 @@ public class BreakDetectCollider : MonoBehaviour
 
     private IEnumerator SmoothConnect(WhileCode parentWhile, Code otherCode)
     {
-        Vector3 targetPos = new Vector3(-1f, 0, 0);
-        Vector3 startPos = otherCode.transform.localPosition;
+        Vector3 worldTargetPos = parentWhile.transform.TransformPoint(new Vector3(-1f, 0, 0));
+        Vector3 startPos = otherCode.transform.position;
         float duration = 0.15f;
         float elapsed = 0f;
 
@@ -99,13 +103,11 @@ public class BreakDetectCollider : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
-            otherCode.transform.localPosition = Vector3.Lerp(startPos, targetPos, t);
+            otherCode.transform.position = Vector3.Lerp(startPos, worldTargetPos, t);
             yield return null;
         }
 
-        otherCode.transform.localPosition = targetPos;
-        otherCode.transform.localEulerAngles = Vector3.zero;
-        otherCode.transform.localScale = Vector3.one;
+        otherCode.transform.position = worldTargetPos;
         Physics.SyncTransforms();
     }
 }

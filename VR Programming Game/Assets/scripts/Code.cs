@@ -10,6 +10,15 @@ public abstract class Code : MonoBehaviour
 
     public abstract void work();
 
+    protected virtual void Awake()
+    {
+        var rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.constraints |= RigidbodyConstraints.FreezeRotation;
+        }
+    }
+
     protected void Complete()
     {
         OnComplete?.Invoke();
@@ -20,7 +29,7 @@ public abstract class Code : MonoBehaviour
         working = false;
     }
 
-    public void SetHighlight(bool active) //¸øÕıÔÚÔËĞĞµÄ´úÂë¿éÉèÖÃ¸ßÁÁÏÔÊ¾
+    public void SetHighlight(bool active) //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ĞµÄ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾
     {
         var renderer = GetComponent<Renderer>();
         if (renderer != null) renderer.material.color = active ? Color.yellow : Color.white;

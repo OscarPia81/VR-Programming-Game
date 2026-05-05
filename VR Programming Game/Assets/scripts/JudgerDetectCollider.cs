@@ -57,16 +57,18 @@ public class JudgerDetectCollider : MonoBehaviour
 
         SetJudger(judger);
 
-        judger.transform.SetParent(parentTransform, false);
+        Vector3 worldPos = judger.transform.position;
+        judger.transform.SetParent(parentTransform, true);
+        judger.transform.position = worldPos;
 
         hasConnected = true;
-        StartCoroutine(SmoothConnect(judger));
+        StartCoroutine(SmoothConnect(judger, parentTransform));
     }
 
-    private IEnumerator SmoothConnect(BoolCode judger)
+    private IEnumerator SmoothConnect(BoolCode judger, Transform parent)
     {
-        Vector3 targetPos = new Vector3(0, 0, -1);
-        Vector3 startPos = judger.transform.localPosition;
+        Vector3 worldTargetPos = parent.TransformPoint(new Vector3(0, 0, -1));
+        Vector3 startPos = judger.transform.position;
         float duration = 0.15f;
         float elapsed = 0f;
 
@@ -74,13 +76,11 @@ public class JudgerDetectCollider : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
-            judger.transform.localPosition = Vector3.Lerp(startPos, targetPos, t);
+            judger.transform.position = Vector3.Lerp(startPos, worldTargetPos, t);
             yield return null;
         }
 
-        judger.transform.localPosition = targetPos;
-        judger.transform.localEulerAngles = Vector3.zero;
-        judger.transform.localScale = Vector3.one;
+        judger.transform.position = worldTargetPos;
         Physics.SyncTransforms();
     }
 
