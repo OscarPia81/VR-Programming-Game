@@ -11,53 +11,27 @@ public class DetectCollider : MonoBehaviour
     {
         if (other.name.Contains("Floor") || other.transform.root.name.Contains("Floor")) return;
         
-        BoxCollider myCollider = GetComponent<BoxCollider>();
-        Vector3 myPos = transform.position;
-        Vector3 otherPos = other.transform.position;
-        Vector3 mySize = myCollider != null ? myCollider.size : Vector3.zero;
-        
-        Debug.Log($"[DetectCollider] 触发: {other.name}, 我的父: {transform.parent.name}, " +
-                  $"我的位置: {myPos}, 其他位置: {otherPos}, 距离: {Vector3.Distance(myPos, otherPos):F2}, " +
-                  $"我的碰撞体大小: {mySize}");
-        
-        if (hasConnected) 
-        {
-            Debug.Log($"[DetectCollider] {transform.parent.name} 已连接，跳过");
-            return;
-        }
+        if (hasConnected) return;
 
         Code myCode = transform.parent.GetComponent<Code>();
         Code otherCode = other.GetComponentInParent<Code>();
 
         if (myCode == null || otherCode == null || myCode == otherCode) return;
-
-        if (myCode.next != null) 
-        {
-            Debug.Log($"[DetectCollider] {myCode.name} 已有next: {myCode.next.name}，跳过");
-            return;
-        }
+        if (otherCode is WhileCode || otherCode is IfCode) return;
+        if (myCode is WhileCode || myCode is IfCode) return;
+        if (otherCode.transform.IsChildOf(myCode.transform)) return;
+        if (myCode.transform.IsChildOf(otherCode.transform)) return;
+        if (myCode.next != null) return;
 
         XRGrabInteractable myGrab = transform.parent.GetComponent<XRGrabInteractable>();
-        if (myGrab != null && myGrab.isSelected) 
-        {
-            Debug.Log($"[DetectCollider] {transform.parent.name} 正在被选中，跳过");
-            return;
-        }
+        if (myGrab != null && myGrab.isSelected) return;
 
         XRGrabInteractable otherGrab = otherCode.GetComponent<XRGrabInteractable>();
-        if (otherGrab != null && otherGrab.isSelected) 
-        {
-            Debug.Log($"[DetectCollider] {otherCode.name} 正在被选中，跳过");
-            return;
-        }
+        if (otherGrab != null && otherGrab.isSelected) return;
 
-        if (!other.CompareTag("CodeBlock") && !otherCode.CompareTag("CodeBlock")) 
-        {
-            Debug.Log($"[DetectCollider] 不是CodeBlock标签，跳过");
-            return;
-        }
+        if (!other.CompareTag("CodeBlock") && !otherCode.CompareTag("CodeBlock")) return;
 
-        Debug.Log($"[DetectCollider] 尝试连接 {myCode.name} → {otherCode.name}");
+        Debug.Log($"[Detect] {myCode.name} -> {otherCode.name}");
         ConnectCode(myCode, otherCode);
     }
 

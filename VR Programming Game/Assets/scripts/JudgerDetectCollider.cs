@@ -19,6 +19,9 @@ public class JudgerDetectCollider : MonoBehaviour
         BoolCode incomingJudger = other.GetComponentInParent<BoolCode>();
         if (incomingJudger == null || incomingJudger.gameObject == transform.parent.gameObject) return;
 
+        if (incomingJudger.transform.IsChildOf(parentBlock.transform)) return;
+        if (parentBlock.transform.IsChildOf(incomingJudger.transform)) return;
+
         XRGrabInteractable judgerGrab = incomingJudger.GetComponent<XRGrabInteractable>();
         if (judgerGrab != null && judgerGrab.isSelected)
         {
@@ -27,6 +30,7 @@ public class JudgerDetectCollider : MonoBehaviour
 
         if (!other.CompareTag("BoolCodeBlock") && !incomingJudger.CompareTag("BoolCodeBlock")) return;
 
+        Debug.Log($"[Judger] {parentBlock.name} <- {incomingJudger.name}");
         ConnectJudger(incomingJudger);
     }
 

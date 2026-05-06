@@ -34,6 +34,7 @@ public class LoopDetectCollider : MonoBehaviour
         XRGrabInteractable otherGrab = otherCode.GetComponent<XRGrabInteractable>();
         if (otherGrab != null && otherGrab.isSelected) return;
 
+        Debug.Log($"[Loop] trigger: other={other.name}");
         ConnectLoopNext(parentWhile, otherCode);
     }
 
@@ -60,6 +61,16 @@ public class LoopDetectCollider : MonoBehaviour
             otherRb.detectCollisions = false;
         }
 
+        Rigidbody parentWhileRb = parentWhile.GetComponent<Rigidbody>();
+        if (parentWhileRb != null)
+        {
+            parentWhileRb.isKinematic = true;
+            parentWhileRb.useGravity = false;
+        }
+
+        Debug.Log($"[Loop] parentWhile={parentWhile.name} pos={parentWhile.transform.position} lossyScale={parentWhile.transform.lossyScale} kin={parentWhileRb?.isKinematic}");
+        Debug.Log($"[Loop] otherCode={otherCode.name} pos={otherCode.transform.position} lossyScale={otherCode.transform.lossyScale}");
+
         if (otherCol != null)
         {
             otherCol.isTrigger = false;
@@ -69,6 +80,14 @@ public class LoopDetectCollider : MonoBehaviour
         Vector3 worldPos = otherCode.transform.position;
         otherCode.transform.SetParent(parentWhile.transform, true);
         otherCode.transform.position = worldPos;
+
+        Debug.Log($"[Loop] after SetParent: otherCode localPos={otherCode.transform.localPosition} parentWhile pos={parentWhile.transform.position}");
+
+        var childCols = otherCode.GetComponentsInChildren<Collider>();
+        var parentCols = parentWhile.GetComponentsInChildren<Collider>();
+        foreach (var a in childCols)
+            foreach (var b in parentCols)
+                Physics.IgnoreCollision(a, b, true);
 
         hasConnected = true;
         StartCoroutine(SmoothConnect(parentWhile, otherCode));
@@ -87,6 +106,8 @@ public class LoopDetectCollider : MonoBehaviour
         float duration = 0.15f;
         float elapsed = 0f;
 
+        Debug.Log($"[Loop] SmoothConnect START: {otherCode.name} start={startPos} target={worldTargetPos} parentWhile pos={parentWhile.transform.position}");
+
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
@@ -97,5 +118,6 @@ public class LoopDetectCollider : MonoBehaviour
 
         otherCode.transform.position = worldTargetPos;
         Physics.SyncTransforms();
+        Debug.Log($"[Loop] SmoothConnect END: {otherCode.name} pos={otherCode.transform.position} parentWhile pos={parentWhile.transform.position}");
     }
 }

@@ -22,11 +22,17 @@ public class ControlDetectCollider : MonoBehaviour
         Code otherCode = other.GetComponent<Code>();
         if (otherCode == null) return;
 
+        if (otherCode is WhileCode || otherCode is IfCode) return;
+        if (myCode is WhileCode || myCode is IfCode) return;
+        if (otherCode.transform.IsChildOf(myCode.transform)) return;
+        if (myCode.transform.IsChildOf(otherCode.transform)) return;
+
         XRGrabInteractable otherGrab = otherCode.GetComponent<XRGrabInteractable>();
         if (otherGrab != null && otherGrab.isSelected) return;
 
         if (!other.CompareTag("CodeBlock") && !otherCode.CompareTag("CodeBlock")) return;
 
+        Debug.Log($"[Control] {myCode.name} -> {otherCode.name}");
         ConnectCode(myCode, otherCode);
     }
 
