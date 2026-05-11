@@ -1,16 +1,14 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.XR;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.XR;
-using System.Linq;
 
 public class CodeManager : MonoBehaviour
 {
-    public bool Coding = false;
     public Transform First = null;
     public GameObject robot = null;
+
+    public bool IsExecuting => playRoutine != null;
 
     private Coroutine playRoutine = null;
     private Stack<WhileCode> loopStack = new Stack<WhileCode>();
