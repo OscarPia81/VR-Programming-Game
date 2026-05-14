@@ -20,7 +20,7 @@ public static class ArrowheadGenerator
         arrow.transform.SetParent(parent);
         arrow.transform.localPosition = Vector3.zero;
         arrow.transform.localRotation = Quaternion.identity;
-        arrow.transform.localScale = Vector3.one * 0.12f;
+        arrow.transform.localScale = Vector3.one * 0.06f;
 
         return arrow;
     }

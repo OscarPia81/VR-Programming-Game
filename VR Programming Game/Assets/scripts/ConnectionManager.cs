@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.XR.CoreUtils;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
 public class ConnectionManager : MonoBehaviour
@@ -99,6 +100,25 @@ public class ConnectionManager : MonoBehaviour
                 {
                     rightNearFarInteractor = nfi;
                     Debug.Log($"[CM] Ray origin: NearFarInteractor on '{nfi.gameObject.name}'");
+                    Debug.Log($"[CM] NFI enabled={nfi.enabled}, activeInHierarchy={nfi.gameObject.activeInHierarchy}");
+
+                    if (!nfi.gameObject.activeInHierarchy)
+                    {
+                        nfi.gameObject.SetActive(true);
+                        Debug.Log("[CM] Activated NearFarInteractor GameObject");
+                    }
+
+                    Debug.Log($"[CM] NFI interactionLayers: {nfi.interactionLayers.value}, selectInputRef: {nfi.selectInput?.inputActionReferencePerformed?.action?.name ?? "null"}");
+                    if (nfi.farInteractionCaster != null)
+                        Debug.Log($"[CM] NFI farCaster type: {nfi.farInteractionCaster.GetType().Name}");
+
+                    var block = FindObjectOfType<MoveCode>();
+                    if (block != null)
+                    {
+                        var grab = block.GetComponent<XRGrabInteractable>();
+                        Debug.Log($"[CM] Block '{block.name}' layer: {LayerMask.LayerToName(block.gameObject.layer)} ({block.gameObject.layer})");
+                        Debug.Log($"[CM] Block GrabInteractable interactionLayers: {grab.interactionLayers.value}");
+                    }
                     return;
                 }
 
@@ -347,16 +367,17 @@ public class ConnectionManager : MonoBehaviour
 
         LineRenderer lr = lineObj.AddComponent<LineRenderer>();
         lr.material = connectionLineMaterial;
-        lr.startWidth = 0.05f;
-        lr.endWidth = 0.05f;
-        lr.positionCount = 2;
+        lr.startWidth = 0.005f;
+        lr.endWidth = 0.005f;
         lr.useWorldSpace = true;
-        lr.SetPosition(0, from.GetOutputPoint());
-        lr.SetPosition(1, to.GetInputPoint());
+        lr.positionCount = 2;
+        lr.SetPosition(0, from.transform.position);
+        lr.SetPosition(1, to.transform.position);
 
         GameObject arrowhead = ArrowheadGenerator.CreateArrowhead(lineObj.transform, connectionLineMaterial);
+        PlaceArrowheadOnSurface(from, to, arrowhead);
 
-        Debug.Log($"[CM] Created line '{from.name}'->'{to.name}' start={from.GetOutputPoint()} end={to.GetInputPoint()} material={connectionLineMaterial?.name ?? "null"}");
+        Debug.Log($"[CM] Created line '{from.name}'->'{to.name}' center={from.transform.position}->{to.transform.position} arrowhead={arrowhead?.transform.position}");
 
         connections.Add(new ConnectionData
         {
@@ -390,9 +411,8 @@ public class ConnectionManager : MonoBehaviour
 
         previewLineRenderer = previewContainer.AddComponent<LineRenderer>();
         previewLineRenderer.material = previewLineMaterial;
-        previewLineRenderer.startWidth = 0.05f;
-        previewLineRenderer.endWidth = 0.05f;
-        previewLineRenderer.positionCount = 2;
+        previewLineRenderer.startWidth = 0.005f;
+        previewLineRenderer.endWidth = 0.005f;
         previewLineRenderer.useWorldSpace = true;
 
         previewArrowhead = ArrowheadGenerator.CreateArrowhead(previewContainer.transform, previewLineMaterial);
@@ -405,7 +425,7 @@ public class ConnectionManager : MonoBehaviour
 
         if (!previewContainer.activeSelf) return;
 
-        Vector3 startPos = selectedBlock.GetOutputPoint();
+        Vector3 startPos = selectedBlock.transform.position;
 
         if (!TryGetRay(out Ray ray))
             return;
@@ -439,16 +459,28 @@ public class ConnectionManager : MonoBehaviour
                 continue;
             }
 
-            Vector3 startPos = data.from.GetOutputPoint();
-            Vector3 endPos = data.to.GetInputPoint();
+            Vector3 startPos = data.from.transform.position;
+            Vector3 endPos = data.to.transform.position;
 
             Debug.DrawLine(startPos, endPos, Color.yellow);
 
             data.line.SetPosition(0, startPos);
             data.line.SetPosition(1, endPos);
 
-            UpdateArrowhead(data.arrowhead, startPos, endPos);
+            PlaceArrowheadOnSurface(data.from, data.to, data.arrowhead);
         }
+    }
+
+    private void PlaceArrowheadOnSurface(Code from, Code to, GameObject arrowhead)
+    {
+        if (arrowhead == null) return;
+
+        Vector3 fromCenter = from.transform.position;
+        Vector3 toCenter = to.transform.position;
+        Vector3 direction = (toCenter - fromCenter).normalized;
+
+        arrowhead.transform.position = (fromCenter + toCenter) * 0.5f;
+        arrowhead.transform.rotation = Quaternion.LookRotation(direction);
     }
 
     private void UpdateArrowhead(GameObject arrowhead, Vector3 from, Vector3 to)
@@ -456,8 +488,7 @@ public class ConnectionManager : MonoBehaviour
         if (arrowhead == null) return;
 
         Vector3 direction = (to - from).normalized;
-        float length = Vector3.Distance(from, to);
-        Vector3 midPoint = from + direction * (length * 0.85f);
+        Vector3 midPoint = (from + to) * 0.5f;
 
         arrowhead.transform.position = midPoint;
         arrowhead.transform.rotation = Quaternion.LookRotation(direction);

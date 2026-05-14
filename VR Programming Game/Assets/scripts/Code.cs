@@ -36,11 +36,17 @@ public abstract class Code : MonoBehaviour
 
     public virtual Vector3 GetOutputPoint()
     {
+        var r = GetComponent<Renderer>();
+        if (r != null)
+            return transform.position + transform.forward * r.bounds.extents.z;
         return transform.position + transform.forward * 0.5f;
     }
 
     public virtual Vector3 GetInputPoint()
     {
+        var r = GetComponent<Renderer>();
+        if (r != null)
+            return transform.position - transform.forward * r.bounds.extents.z;
         return transform.position - transform.forward * 0.5f;
     }
 }
