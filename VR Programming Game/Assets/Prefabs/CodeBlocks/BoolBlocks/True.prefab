@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4633056228738401171}
   - component: {fileID: 3110657773893297864}
   - component: {fileID: 1325928368449619355}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: True
   m_TagString: BoolCodeBlock
   m_Icon: {fileID: 0}
@@ -29,7 +29,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4759340270157623274}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: -0, w: -0.7071068}
   m_LocalPosition: {x: 22.265078, y: 1.13, z: 4.82}
   m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
   m_ConstrainProportionsScale: 0
@@ -37,7 +37,7 @@ Transform:
   - {fileID: 3695274320453829563}
   - {fileID: 7152830649777847386}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 270, z: 0}
 --- !u!65 &1123509127485517605
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -183,7 +183,7 @@ MonoBehaviour:
   m_SnapToColliderVolume: 1
   m_ReinitializeDynamicAttachEverySingleGrab: 1
   m_AttachEaseInTime: 0.15
-  m_MovementType: 1
+  m_MovementType: 0
   m_PredictedVisualsTransform: {fileID: 0}
   m_VelocityDamping: 1
   m_VelocityScale: 1
@@ -264,7 +264,7 @@ GameObject:
   - component: {fileID: 7152830649777847386}
   - component: {fileID: 1618975236781038901}
   - component: {fileID: 896051381543124480}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Blockname
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -362,7 +362,7 @@ GameObject:
   - component: {fileID: 7010580192869424294}
   - component: {fileID: 4676233913453828491}
   - component: {fileID: 5179109358766418676}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}

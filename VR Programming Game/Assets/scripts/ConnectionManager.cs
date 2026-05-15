@@ -14,6 +14,7 @@ public class ConnectionManager : MonoBehaviour
     [Header("Visuals")]
     public Material previewLineMaterial;
     public Material connectionLineMaterial;
+    public Material judgerLineMaterial;
 
     [Header("Settings")]
     public LayerMask blockLayerMask = 1 << 3;
@@ -74,6 +75,8 @@ public class ConnectionManager : MonoBehaviour
             previewLineMaterial = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")) { color = new Color(0.3f, 0.7f, 1f, 0.5f) };
         if (connectionLineMaterial == null)
             connectionLineMaterial = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")) { color = new Color(1f, 0.85f, 0f, 0.6f) };
+        if (judgerLineMaterial == null)
+            judgerLineMaterial = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")) { color = new Color(0.2f, 0.9f, 0.3f, 0.6f) };
 
         connectionsContainer = new GameObject("ConnectionLines");
         connectionsContainer.transform.SetParent(transform);
@@ -239,6 +242,33 @@ public class ConnectionManager : MonoBehaviour
                 SelectBlock(hitBlock);
             }
         }
+        else if (selectedBlock is While whileBlock && hitBlock is BoolCode boolBlock)
+        {
+            if (whileBlock.Judger == boolBlock)
+            {
+                Debug.Log($"[CM] Disconnect Judger '{whileBlock.name}' <- '{boolBlock.name}'");
+                DisconnectJudger(whileBlock);
+            }
+            else if (!IsAnyonesJudger(boolBlock))
+            {
+                Debug.Log($"[CM] Connect Judger '{whileBlock.name}' <- '{boolBlock.name}'");
+                ConnectJudger(whileBlock, boolBlock);
+            }
+            else
+            {
+                Debug.Log($"[CM] Judger reject: '{boolBlock.name}' already someone's Judger");
+            }
+            DeselectBlock();
+        }
+        else if (selectedBlock is BoolCode && hitBlock is While hitWhile)
+        {
+            if (hitWhile.Judger == selectedBlock)
+            {
+                Debug.Log($"[CM] Disconnect Judger '{hitWhile.name}' <- '{selectedBlock.name}'");
+                DisconnectJudger(hitWhile);
+                DeselectBlock();
+            }
+        }
         else
         {
             if (hitBlock != null && hitBlock != selectedBlock)
@@ -271,7 +301,7 @@ public class ConnectionManager : MonoBehaviour
 
     private bool IsConnectable(Code block)
     {
-        return block is MoveCode;
+        return block is MoveCode || block is While || block is WhileEnd || block is BoolCode;
     }
 
     private void SelectBlock(Code block)
@@ -355,6 +385,51 @@ public class ConnectionManager : MonoBehaviour
         }
 
         from.next = null;
+    }
+
+    private bool IsAnyonesJudger(BoolCode target)
+    {
+        While[] allWhiles = FindObjectsOfType<While>();
+        foreach (While w in allWhiles)
+        {
+            if (w.Judger == target) return true;
+        }
+        return false;
+    }
+
+    private void ConnectJudger(While whileBlock, BoolCode boolBlock)
+    {
+        DisconnectJudger(whileBlock);
+        whileBlock.Judger = boolBlock;
+        CreateJudgerLine(whileBlock, boolBlock);
+    }
+
+    private void DisconnectJudger(While whileBlock)
+    {
+        if (whileBlock.Judger == null) return;
+        RemoveConnectionLine(whileBlock, whileBlock.Judger);
+        whileBlock.Judger = null;
+    }
+
+    private void CreateJudgerLine(While from, BoolCode to)
+    {
+        GameObject lineObj = new GameObject($"Judger_{from.name}_to_{to.name}");
+        lineObj.transform.SetParent(connectionsContainer.transform);
+
+        LineRenderer lr = lineObj.AddComponent<LineRenderer>();
+        lr.material = judgerLineMaterial;
+        lr.startWidth = 0.005f;
+        lr.endWidth = 0.005f;
+        lr.useWorldSpace = true;
+        lr.positionCount = 2;
+        lr.SetPosition(0, from.transform.position);
+        lr.SetPosition(1, to.transform.position);
+
+        GameObject arrowhead = ArrowheadGenerator.CreateArrowhead(lineObj.transform, judgerLineMaterial);
+        arrowhead.transform.position = (from.transform.position + to.transform.position) * 0.5f;
+        arrowhead.transform.rotation = Quaternion.LookRotation((to.transform.position - from.transform.position).normalized);
+
+        connections.Add(new ConnectionData { from = from, to = to, line = lr, arrowhead = arrowhead });
     }
 
     private void CreateConnectionLine(Code from, Code to)

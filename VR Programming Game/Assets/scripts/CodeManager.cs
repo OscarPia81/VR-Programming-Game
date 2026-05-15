@@ -11,7 +11,7 @@ public class CodeManager : MonoBehaviour
     public bool IsExecuting => playRoutine != null;
 
     private Coroutine playRoutine = null;
-    private Stack<WhileCode> loopStack = new Stack<WhileCode>();
+    private Stack<While> loopStack = new Stack<While>();
 
     private bool wasLeftTriggerPressed = false;
 
@@ -81,38 +81,57 @@ public class CodeManager : MonoBehaviour
 
             cur.OnComplete -= () => completed = true;
             
-            if (cur is WhileCode whileCode)
+            if (cur is While whileBlock)
             {
-                if (whileCode.Judger?.judge == true)
+                if (whileBlock.Judger?.judge == true)
                 {
-                    loopStack.Push(whileCode);
+                    loopStack.Push(whileBlock);
                 }
                 else
                 {
-                    if (loopStack.Count > 0)
-                    {
-                        loopStack.Pop();
-                    }
+                    cur = FindMatchingWhileEnd(whileBlock)?.next;
+                    if (cur == null) break;
+                    continue;
                 }
             }
-            
+
+            if (cur is WhileEnd)
+            {
+                if (loopStack.Count == 0) break;
+
+                While loopStart = loopStack.Peek();
+                if (loopStart.Judger?.judge == true)
+                {
+                    loopStart.Judger.ResetState();
+                    cur = loopStart.next;
+                    continue;
+                }
+                else
+                {
+                    loopStack.Pop();
+                    cur = cur.next;
+                    continue;
+                }
+            }
+
             if (cur.next == null && loopStack.Count > 0)
             {
-                WhileCode loopStart = loopStack.Peek();
-                
+                While loopStart = loopStack.Peek();
+
                 if (loopStart.Judger?.judge == true)
                 {
                     if (loopStart.Judger != null)
                     {
                         loopStart.Judger.ResetState();
                     }
-                    cur = loopStart.LoopNext;
+                    cur = loopStart.next;
                     continue;
                 }
                 else
                 {
                     loopStack.Pop();
-                    cur = loopStart.next;
+                    cur = FindMatchingWhileEnd(loopStart)?.next;
+                    if (cur == null) break;
                     continue;
                 }
             }
@@ -177,6 +196,24 @@ public class CodeManager : MonoBehaviour
             }
             ResetAllBlocks();
         }
+    }
+
+    private WhileEnd FindMatchingWhileEnd(While whileBlock)
+    {
+        int depth = 0;
+        Code cur = whileBlock.next;
+
+        while (cur != null)
+        {
+            if (cur is While) depth++;
+            else if (cur is WhileEnd)
+            {
+                if (depth == 0) return (WhileEnd)cur;
+                depth--;
+            }
+            cur = cur.next;
+        }
+        return null;
     }
 
     private void ResetAllBlocks()
