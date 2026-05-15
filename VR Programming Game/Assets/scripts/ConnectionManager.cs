@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 using Unity.XR.CoreUtils;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.XR.Interaction.Toolkit.Interactors.Casters;
 
 public class ConnectionManager : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public class ConnectionManager : MonoBehaviour
     public Material connectionLineMaterial;
 
     [Header("Settings")]
-    public LayerMask blockLayerMask = -1;
+    public LayerMask blockLayerMask = 1 << 3;
     public float maxPreviewDistance = 20f;
 
     private InputAction rightActivateAction;
@@ -111,6 +112,19 @@ public class ConnectionManager : MonoBehaviour
                     Debug.Log($"[CM] NFI interactionLayers: {nfi.interactionLayers.value}, selectInputRef: {nfi.selectInput?.inputActionReferencePerformed?.action?.name ?? "null"}");
                     if (nfi.farInteractionCaster != null)
                         Debug.Log($"[CM] NFI farCaster type: {nfi.farInteractionCaster.GetType().Name}");
+
+                    var caster = nfi.farInteractionCaster as CurveInteractionCaster;
+                    if (caster != null)
+                    {
+                        caster.raycastMask |= 1 << 3;
+                        var oldDist = caster.castDistance;
+                        caster.castDistance = 25f;
+                        Debug.Log($"[CM] CurveCaster: mask={caster.raycastMask.value}, castDist {oldDist} -> {caster.castDistance}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[CM] farInteractionCaster is not CurveInteractionCaster");
+                    }
 
                     var block = FindObjectOfType<MoveCode>();
                     if (block != null)
@@ -329,13 +343,6 @@ public class ConnectionManager : MonoBehaviour
 
         from.next = to;
 
-        Rigidbody rb = to.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-        }
-
         CreateConnectionLine(from, to);
     }
 
@@ -345,16 +352,6 @@ public class ConnectionManager : MonoBehaviour
         if (oldNext != null)
         {
             RemoveConnectionLine(from, oldNext);
-
-            if (!IsAnyonesNext(oldNext, exceptFrom: from))
-            {
-                Rigidbody rb = oldNext.GetComponent<Rigidbody>();
-                if (rb != null)
-                {
-                    rb.isKinematic = false;
-                    rb.useGravity = true;
-                }
-            }
         }
 
         from.next = null;
