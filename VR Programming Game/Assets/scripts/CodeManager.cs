@@ -5,7 +5,6 @@ using UnityEngine.InputSystem;
 
 public class CodeManager : MonoBehaviour
 {
-    public Transform First = null;
     public GameObject robot = null;
 
     public bool IsExecuting => playRoutine != null;
@@ -22,8 +21,12 @@ public class CodeManager : MonoBehaviour
     public static Animator RobotAnimator { get; private set; }
     public static Transform RobotTarget { get; private set; }
 
+    private ScreenController screen;
+
     private void Awake()
     {
+        screen = FindObjectOfType<ScreenController>();
+
         if (robot != null)
         {
             Robot = robot;
@@ -61,8 +64,14 @@ public class CodeManager : MonoBehaviour
             Debug.Log("[PlayCoroutine] RobotAnimator is null!");
         }
 
-        Code cur = First?.GetComponent<Code>();
-        
+        Code cur = FindObjectOfType<Start>();
+        if (cur == null)
+        {
+            Debug.LogWarning("[CM] No Start block found in scene, nothing to execute");
+            playRoutine = null;
+            yield break;
+        }
+
         while (cur != null)
         {
             bool completed = false;
@@ -83,6 +92,7 @@ public class CodeManager : MonoBehaviour
             
             if (cur is While whileBlock)
             {
+                whileBlock.Judger?.work();
                 if (whileBlock.Judger?.judge == true)
                 {
                     loopStack.Push(whileBlock);
@@ -100,9 +110,9 @@ public class CodeManager : MonoBehaviour
                 if (loopStack.Count == 0) break;
 
                 While loopStart = loopStack.Peek();
+                loopStart.Judger?.work();
                 if (loopStart.Judger?.judge == true)
                 {
-                    loopStart.Judger.ResetState();
                     cur = loopStart.next;
                     continue;
                 }
@@ -114,16 +124,53 @@ public class CodeManager : MonoBehaviour
                 }
             }
 
+            if (cur is If ifBlock)
+            {
+                ifBlock.Judger?.work();
+                if (ifBlock.Judger?.judge == true)
+                {
+                    cur = ifBlock.next;
+                    if (cur == null) break;
+                    continue;
+                }
+                else
+                {
+                    var elseBlock = FindMatchingElse(ifBlock);
+                    if (elseBlock != null)
+                    {
+                        cur = elseBlock.next;
+                    }
+                    else
+                    {
+                        var endBlock = FindMatchingIfEnd(ifBlock);
+                        cur = endBlock?.next;
+                    }
+                    if (cur == null) break;
+                    continue;
+                }
+            }
+
+            if (cur is Else)
+            {
+                var endBlock = FindMatchingIfEnd((Else)cur);
+                cur = endBlock?.next;
+                if (cur == null) break;
+                continue;
+            }
+
+            if (cur is IfEnd)
+            {
+                cur = cur.next;
+                continue;
+            }
+
             if (cur.next == null && loopStack.Count > 0)
             {
                 While loopStart = loopStack.Peek();
 
+                loopStart.Judger?.work();
                 if (loopStart.Judger?.judge == true)
                 {
-                    if (loopStart.Judger != null)
-                    {
-                        loopStart.Judger.ResetState();
-                    }
                     cur = loopStart.next;
                     continue;
                 }
@@ -182,6 +229,17 @@ public class CodeManager : MonoBehaviour
     {
         if (playRoutine == null)
         {
+            var start = FindObjectOfType<Start>();
+            var errors = CodeValidator.Validate(start);
+            if (errors.Count > 0)
+            {
+                var msg = string.Join("\n", errors.ConvertAll(e => e.message));
+                screen?.UpdateText(msg);
+                Debug.LogWarning($"[CM] Validation failed:\n{msg}");
+                return;
+            }
+            screen?.ClearScreen();
+
             ResetAllBlocks();
             playRoutine = StartCoroutine(PlayCoroutine());
         }
@@ -216,11 +274,46 @@ public class CodeManager : MonoBehaviour
         return null;
     }
 
+    private Else FindMatchingElse(If ifBlock)
+    {
+        int depth = 0;
+        Code cur = ifBlock.next;
+
+        while (cur != null)
+        {
+            if (cur is If) depth++;
+            else if (cur is Else)
+            {
+                if (depth == 0) return (Else)cur;
+                depth--;
+            }
+            cur = cur.next;
+        }
+        return null;
+    }
+
+    private IfEnd FindMatchingIfEnd(Code fromBlock)
+    {
+        int depth = 0;
+        Code cur = fromBlock.next;
+
+        while (cur != null)
+        {
+            if (cur is If) depth++;
+            else if (cur is IfEnd)
+            {
+                if (depth == 0) return (IfEnd)cur;
+                depth--;
+            }
+            cur = cur.next;
+        }
+        return null;
+    }
+
     private void ResetAllBlocks()
     {
-        if (First == null) return;
-        
-        Code cur = First.GetComponent<Code>();
+        Code cur = FindObjectOfType<Start>();
+        if (cur == null) return;
         while (cur != null)
         {
             cur.ResetState();

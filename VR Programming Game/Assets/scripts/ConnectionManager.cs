@@ -236,7 +236,7 @@ public class ConnectionManager : MonoBehaviour
 
         if (selectedBlock == null)
         {
-            if (hitBlock != null)
+            if (hitBlock != null && hitBlock is not BoolCode)
             {
                 Debug.Log($"[CM] Select '{hitBlock.name}'");
                 SelectBlock(hitBlock);
@@ -260,12 +260,39 @@ public class ConnectionManager : MonoBehaviour
             }
             DeselectBlock();
         }
+        else if (selectedBlock is If ifBlock && hitBlock is BoolCode boolBlock2)
+        {
+            if (ifBlock.Judger == boolBlock2)
+            {
+                Debug.Log($"[CM] Disconnect Judger '{ifBlock.name}' <- '{boolBlock2.name}'");
+                DisconnectJudger(ifBlock);
+            }
+            else if (!IsAnyonesJudger(boolBlock2))
+            {
+                Debug.Log($"[CM] Connect Judger '{ifBlock.name}' <- '{boolBlock2.name}'");
+                ConnectJudger(ifBlock, boolBlock2);
+            }
+            else
+            {
+                Debug.Log($"[CM] Judger reject: '{boolBlock2.name}' already someone's Judger");
+            }
+            DeselectBlock();
+        }
         else if (selectedBlock is BoolCode && hitBlock is While hitWhile)
         {
             if (hitWhile.Judger == selectedBlock)
             {
                 Debug.Log($"[CM] Disconnect Judger '{hitWhile.name}' <- '{selectedBlock.name}'");
                 DisconnectJudger(hitWhile);
+                DeselectBlock();
+            }
+        }
+        else if (selectedBlock is BoolCode && hitBlock is If hitIf)
+        {
+            if (hitIf.Judger == selectedBlock)
+            {
+                Debug.Log($"[CM] Disconnect Judger '{hitIf.name}' <- '{selectedBlock.name}'");
+                DisconnectJudger(hitIf);
                 DeselectBlock();
             }
         }
@@ -301,7 +328,7 @@ public class ConnectionManager : MonoBehaviour
 
     private bool IsConnectable(Code block)
     {
-        return block is MoveCode || block is While || block is WhileEnd || block is BoolCode;
+        return block is MoveCode || block is While || block is WhileEnd || block is BoolCode || block is If || block is Else || block is IfEnd || block is Start;
     }
 
     private void SelectBlock(Code block)
@@ -389,29 +416,33 @@ public class ConnectionManager : MonoBehaviour
 
     private bool IsAnyonesJudger(BoolCode target)
     {
-        While[] allWhiles = FindObjectsOfType<While>();
-        foreach (While w in allWhiles)
-        {
+        foreach (While w in FindObjectsOfType<While>())
             if (w.Judger == target) return true;
-        }
+        foreach (If i in FindObjectsOfType<If>())
+            if (i.Judger == target) return true;
         return false;
     }
 
-    private void ConnectJudger(While whileBlock, BoolCode boolBlock)
+    private void ConnectJudger(Code whileOrIfBlock, BoolCode boolBlock)
     {
-        DisconnectJudger(whileBlock);
-        whileBlock.Judger = boolBlock;
-        CreateJudgerLine(whileBlock, boolBlock);
+        DisconnectJudger(whileOrIfBlock);
+        if (whileOrIfBlock is While w) w.Judger = boolBlock;
+        else if (whileOrIfBlock is If i) i.Judger = boolBlock;
+        CreateJudgerLine(whileOrIfBlock, boolBlock);
     }
 
-    private void DisconnectJudger(While whileBlock)
+    private void DisconnectJudger(Code whileOrIfBlock)
     {
-        if (whileBlock.Judger == null) return;
-        RemoveConnectionLine(whileBlock, whileBlock.Judger);
-        whileBlock.Judger = null;
+        BoolCode old = null;
+        if (whileOrIfBlock is While w) old = w.Judger;
+        else if (whileOrIfBlock is If i) old = i.Judger;
+        if (old == null) return;
+        RemoveConnectionLine(whileOrIfBlock, old);
+        if (whileOrIfBlock is While w2) w2.Judger = null;
+        else if (whileOrIfBlock is If i2) i2.Judger = null;
     }
 
-    private void CreateJudgerLine(While from, BoolCode to)
+    private void CreateJudgerLine(Code from, Code to)
     {
         GameObject lineObj = new GameObject($"Judger_{from.name}_to_{to.name}");
         lineObj.transform.SetParent(connectionsContainer.transform);
