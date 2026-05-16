@@ -2,6 +2,15 @@ using UnityEngine;
 
 public static class ArrowheadGenerator
 {
+    private static Mesh sharedMesh;
+
+    private static Mesh GetSharedMesh()
+    {
+        if (sharedMesh == null)
+            sharedMesh = CreateArrowheadMesh();
+        return sharedMesh;
+    }
+
     public static GameObject CreateArrowhead(Transform parent, Material material)
     {
         GameObject arrow = new GameObject("Arrowhead");
@@ -9,8 +18,7 @@ public static class ArrowheadGenerator
         MeshFilter mf = arrow.AddComponent<MeshFilter>();
         MeshRenderer mr = arrow.AddComponent<MeshRenderer>();
 
-        Mesh mesh = CreateArrowheadMesh();
-        mf.mesh = mesh;
+        mf.mesh = GetSharedMesh();
 
         if (material != null)
         {

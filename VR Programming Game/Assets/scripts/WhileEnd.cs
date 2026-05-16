@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class WhileEnd : Code
 {
     public override void work()

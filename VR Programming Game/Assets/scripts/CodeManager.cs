@@ -75,8 +75,9 @@ public class CodeManager : MonoBehaviour
         while (cur != null)
         {
             bool completed = false;
-            
-            cur.OnComplete += () => completed = true;
+            System.Action handler = () => completed = true;
+
+            cur.OnComplete += handler;
 
             cur.SetHighlight(true);
 
@@ -88,7 +89,7 @@ public class CodeManager : MonoBehaviour
 
             cur.SetHighlight(false);
 
-            cur.OnComplete -= () => completed = true;
+            cur.OnComplete -= handler;
             
             if (cur is While whileBlock)
             {
@@ -240,6 +241,7 @@ public class CodeManager : MonoBehaviour
             }
             screen?.ClearScreen();
 
+            loopStack.Clear();
             ResetAllBlocks();
             playRoutine = StartCoroutine(PlayCoroutine());
         }
@@ -247,6 +249,7 @@ public class CodeManager : MonoBehaviour
         {
             StopAllCoroutines();
             playRoutine = null;
+            loopStack.Clear();
             if (RobotAnimator != null)
             {
                 RobotAnimator.SetBool("Walk_Anim", false);

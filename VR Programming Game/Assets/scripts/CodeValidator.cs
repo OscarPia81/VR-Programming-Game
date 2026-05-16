@@ -66,6 +66,10 @@ public static class CodeValidator
                     whileDepth = 0;
                 }
             }
+            else if (cur is Else && ifDepth == 0 && whileDepth == 0)
+            {
+                errors.Add(new Error { message = $"Else '{cur.name}' outside any If block" });
+            }
             cur = cur.next;
         }
 
@@ -100,7 +104,6 @@ public static class CodeValidator
                                 break;
                             }
                         }
-                        depth--;
                     }
                     else if (scan is IfEnd && depth == 0) break;
                     scan = scan.next;

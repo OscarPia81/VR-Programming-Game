@@ -23,7 +23,12 @@ public class MoveCode : Code
     private void Update()
     {
         if (!isMoving) return;
-        if (CodeManager.RobotTarget == null) return;
+        if (CodeManager.RobotTarget == null)
+        {
+            isMoving = false;
+            Complete();
+            return;
+        }
 
         direction = direction.normalized;
         float step = speed * Time.deltaTime;
@@ -41,6 +46,14 @@ public class MoveCode : Code
             }
 
             Complete();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (isMoving && CodeManager.RobotAnimator != null)
+        {
+            CodeManager.RobotAnimator.SetBool("Walk_Anim", false);
         }
     }
 }

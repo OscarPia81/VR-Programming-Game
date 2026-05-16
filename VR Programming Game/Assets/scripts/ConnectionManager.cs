@@ -26,6 +26,10 @@ public class ConnectionManager : MonoBehaviour
     private CodeManager codeManager;
     private Code selectedBlock;
 
+    private bool autoCreatedPreviewMaterial;
+    private bool autoCreatedConnectionMaterial;
+    private bool autoCreatedJudgerMaterial;
+
     private GameObject previewContainer;
     private LineRenderer previewLineRenderer;
     private GameObject previewArrowhead;
@@ -72,11 +76,20 @@ public class ConnectionManager : MonoBehaviour
         FindRayOrigin();
 
         if (previewLineMaterial == null)
+        {
             previewLineMaterial = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")) { color = new Color(0.3f, 0.7f, 1f, 0.5f) };
+            autoCreatedPreviewMaterial = true;
+        }
         if (connectionLineMaterial == null)
+        {
             connectionLineMaterial = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")) { color = new Color(1f, 0.85f, 0f, 0.6f) };
+            autoCreatedConnectionMaterial = true;
+        }
         if (judgerLineMaterial == null)
+        {
             judgerLineMaterial = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")) { color = new Color(0.2f, 0.9f, 0.3f, 0.6f) };
+            autoCreatedJudgerMaterial = true;
+        }
 
         connectionsContainer = new GameObject("ConnectionLines");
         connectionsContainer.transform.SetParent(transform);
@@ -89,6 +102,9 @@ public class ConnectionManager : MonoBehaviour
             rightActivateAction.performed -= OnActivatePerformed;
             rightActivateAction.Disable();
         }
+        if (autoCreatedPreviewMaterial && previewLineMaterial != null) Destroy(previewLineMaterial);
+        if (autoCreatedConnectionMaterial && connectionLineMaterial != null) Destroy(connectionLineMaterial);
+        if (autoCreatedJudgerMaterial && judgerLineMaterial != null) Destroy(judgerLineMaterial);
     }
 
     private void FindRayOrigin()
@@ -383,8 +399,8 @@ public class ConnectionManager : MonoBehaviour
 
     private bool IsAnyonesNext(Code target, Code exceptFrom)
     {
-        MoveCode[] allBlocks = FindObjectsOfType<MoveCode>();
-        foreach (MoveCode block in allBlocks)
+        Code[] allBlocks = FindObjectsOfType<Code>();
+        foreach (Code block in allBlocks)
         {
             if (block.next == target && block != exceptFrom)
             {

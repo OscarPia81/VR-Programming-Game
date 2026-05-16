@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class If : Code
 {
     public BoolCode Judger = null;
