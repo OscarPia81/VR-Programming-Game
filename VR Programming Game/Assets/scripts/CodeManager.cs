@@ -226,6 +226,21 @@ public class CodeManager : MonoBehaviour
         wasLeftTriggerPressed = pressed;
     }
 
+    public void StopExecution()
+    {
+        if (playRoutine != null)
+        {
+            StopAllCoroutines();
+            playRoutine = null;
+            if (RobotAnimator != null)
+            {
+                RobotAnimator.SetBool("Walk_Anim", false);
+                RobotAnimator.SetBool("Open_Anim", false);
+            }
+            loopStack.Clear();
+        }
+    }
+
     private void ToggleCodeExecution()
     {
         if (playRoutine == null)
@@ -247,14 +262,7 @@ public class CodeManager : MonoBehaviour
         }
         else
         {
-            StopAllCoroutines();
-            playRoutine = null;
-            loopStack.Clear();
-            if (RobotAnimator != null)
-            {
-                RobotAnimator.SetBool("Walk_Anim", false);
-                RobotAnimator.SetBool("Open_Anim", false);
-            }
+            StopExecution();
             ResetAllBlocks();
         }
     }

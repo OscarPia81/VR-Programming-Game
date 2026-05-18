@@ -344,7 +344,7 @@ public class ConnectionManager : MonoBehaviour
 
     private bool IsConnectable(Code block)
     {
-        return block is MoveCode || block is While || block is WhileEnd || block is BoolCode || block is If || block is Else || block is IfEnd || block is Start;
+        return block is MoveCode || block is TurnLeftCode || block is TurnRightCode || block is While || block is WhileEnd || block is BoolCode || block is If || block is Else || block is IfEnd || block is Start;
     }
 
     private void SelectBlock(Code block)

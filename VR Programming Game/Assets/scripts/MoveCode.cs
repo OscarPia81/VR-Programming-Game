@@ -5,15 +5,19 @@ public class MoveCode : Code
     public float speed = 2f;
     private bool isMoving = false;
     private float movedDistance = 0f;
-    public Vector3 direction = Vector3.right;
-    public float targetDistance = 10f;
+    private Vector3 targetPosition;
+    private Vector3 moveDirection;
+    private float moveTargetDistance;
 
     override public void work()
     {
         if (isMoving) return;
         isMoving = true;
         movedDistance = 0f;
-        
+        moveDirection = CodeManager.RobotTarget.forward;
+        moveTargetDistance = LevelManager.Instance != null ? LevelManager.Instance.cellSize : 1f;
+        targetPosition = CodeManager.RobotTarget.position + moveDirection * moveTargetDistance;
+
         if (CodeManager.RobotAnimator != null)
         {
             CodeManager.RobotAnimator.SetBool("Walk_Anim", true);
@@ -30,14 +34,14 @@ public class MoveCode : Code
             return;
         }
 
-        direction = direction.normalized;
         float step = speed * Time.deltaTime;
-        step = Mathf.Min(step, targetDistance - movedDistance);
-        CodeManager.RobotTarget.Translate(direction * step, Space.World);
+        step = Mathf.Min(step, moveTargetDistance - movedDistance);
+        CodeManager.RobotTarget.Translate(moveDirection * step, Space.World);
         movedDistance += step;
 
-        if (movedDistance >= targetDistance)
+        if (movedDistance >= moveTargetDistance)
         {
+            CodeManager.RobotTarget.position = targetPosition;
             isMoving = false;
 
             if (CodeManager.RobotAnimator != null)
