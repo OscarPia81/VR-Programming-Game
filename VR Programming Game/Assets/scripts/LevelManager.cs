@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,43 +22,71 @@ public class LevelManager : MonoBehaviour
     public float starHeight = 0.5f;
 
     public int nextStarIndex { get; private set; }
+    public int currentLevelIndex { get; private set; }
+    public LevelData currentLevelData => levels[currentLevelIndex];
 
-    private int currentLevelIndex;
     private GameObject gridParent;
-    private ScreenController screen;
+    private MenuManager menu;
     private CodeManager codeManager;
+    private bool levelActive;
 
     private void Awake()
     {
         Instance = this;
-        screen = FindObjectOfType<ScreenController>();
+        menu = FindObjectOfType<MenuManager>();
         codeManager = FindObjectOfType<CodeManager>();
     }
 
-    private void Start()
+    public void LoadLevelByIndex(int index)
     {
-        if (levels.Count > 0)
-            LoadLevel(0);
+        if (index < 0 || index >= levels.Count) return;
+
+        if (codeManager != null && codeManager.IsExecuting)
+            codeManager.StopExecution();
+
+        ClearLevel();
+
+        currentLevelIndex = index;
+        nextStarIndex = 0;
+
+        var data = levels[index];
+        var size = gridSize.x > 0 && gridSize.y > 0 ? gridSize : data.gridSize;
+
+        GenerateGrid(size);
+        SpawnStars(data, size);
+        PlaceRobot(data, size);
+        levelActive = true;
+    }
+
+    public void ReloadLevel()
+    {
+        LoadLevelByIndex(currentLevelIndex);
+    }
+
+    public void StopLevel()
+    {
+        levelActive = false;
+        if (codeManager != null && codeManager.IsExecuting)
+            codeManager.StopExecution();
+        ClearLevel();
     }
 
     public void CollectStar(Star star)
     {
+        if (!levelActive) return;
+
         if (star.orderIndex != nextStarIndex)
         {
-            screen?.UpdateText("Wrong order! Restarting...");
-            StartCoroutine(RestartAfterDelay());
+            menu?.ShowLevelFailed();
             return;
         }
 
         star.Collect();
         nextStarIndex++;
 
-        screen?.UpdateText($"Star {nextStarIndex}/{CountStarsInLevel()} collected");
-
         if (nextStarIndex >= CountStarsInLevel())
         {
-            screen?.UpdateText("Level Complete!");
-            StartCoroutine(NextLevelAfterDelay(2f));
+            menu?.ShowLevelComplete();
         }
     }
 
@@ -67,50 +94,6 @@ public class LevelManager : MonoBehaviour
     {
         if (currentLevelIndex >= levels.Count) return 0;
         return levels[currentLevelIndex].starPositions.Length;
-    }
-
-    private IEnumerator NextLevelAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        currentLevelIndex++;
-        if (currentLevelIndex >= levels.Count)
-        {
-            screen?.UpdateText("All levels complete!");
-            yield break;
-        }
-        LoadLevel(currentLevelIndex);
-    }
-
-    private IEnumerator RestartAfterDelay()
-    {
-        yield return new WaitForSeconds(1.5f);
-        LoadLevel(currentLevelIndex);
-    }
-
-    public void RestartLevel()
-    {
-        LoadLevel(currentLevelIndex);
-    }
-
-    private void LoadLevel(int index)
-    {
-        currentLevelIndex = index;
-        nextStarIndex = 0;
-
-        if (codeManager != null && codeManager.IsExecuting)
-        {
-            codeManager.StopExecution();
-        }
-
-        ClearLevel();
-
-        var data = levels[index];
-
-        var size = gridSize.x > 0 && gridSize.y > 0 ? gridSize : data.gridSize;
-
-        GenerateGrid(size);
-        SpawnStars(data, size);
-        PlaceRobot(data, size);
     }
 
     private void ClearLevel()

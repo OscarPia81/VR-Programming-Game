@@ -3,6 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Level", menuName = "VRPG/Level Data")]
 public class LevelData : ScriptableObject
 {
+    public int levelNumber;
     public Vector2Int gridSize = new(10, 10);
     public Vector2Int robotStart;
     public RobotDirection robotFacing = RobotDirection.North;

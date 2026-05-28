@@ -3,7 +3,6 @@ using UnityEngine;
 
 public abstract class Code : MonoBehaviour
 {
-    public bool working = false;
     public Code next = null;
     public event Action OnComplete;
 
@@ -25,7 +24,6 @@ public abstract class Code : MonoBehaviour
 
     public void ResetState()
     {
-        working = false;
     }
 
     public void SetHighlight(bool active)

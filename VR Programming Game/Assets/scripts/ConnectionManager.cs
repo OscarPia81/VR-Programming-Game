@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Unity.XR.CoreUtils;
-using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Interactors.Casters;
+using UnityEngine.XR.Interaction.Toolkit.UI;
 
 public class ConnectionManager : MonoBehaviour
 {
@@ -36,6 +37,9 @@ public class ConnectionManager : MonoBehaviour
 
     private readonly List<ConnectionData> connections = new List<ConnectionData>();
     private GameObject connectionsContainer;
+    private bool isOverUI;
+    private UnityEngine.Events.UnityAction<UIHoverEventArgs> onUIHoverEntered;
+    private UnityEngine.Events.UnityAction<UIHoverEventArgs> onUIHoverExited;
 
     private class ConnectionData
     {
@@ -91,6 +95,8 @@ public class ConnectionManager : MonoBehaviour
             autoCreatedJudgerMaterial = true;
         }
 
+        SetupXRIUI();
+
         connectionsContainer = new GameObject("ConnectionLines");
         connectionsContainer.transform.SetParent(transform);
     }
@@ -101,6 +107,11 @@ public class ConnectionManager : MonoBehaviour
         {
             rightActivateAction.performed -= OnActivatePerformed;
             rightActivateAction.Disable();
+        }
+        if (rightNearFarInteractor != null)
+        {
+            if (onUIHoverEntered != null) rightNearFarInteractor.uiHoverEntered.RemoveListener(onUIHoverEntered);
+            if (onUIHoverExited != null) rightNearFarInteractor.uiHoverExited.RemoveListener(onUIHoverExited);
         }
         if (autoCreatedPreviewMaterial && previewLineMaterial != null) Destroy(previewLineMaterial);
         if (autoCreatedConnectionMaterial && connectionLineMaterial != null) Destroy(connectionLineMaterial);
@@ -119,8 +130,11 @@ public class ConnectionManager : MonoBehaviour
                 if (nfi != null)
                 {
                     rightNearFarInteractor = nfi;
-                    Debug.Log($"[CM] Ray origin: NearFarInteractor on '{nfi.gameObject.name}'");
-                    Debug.Log($"[CM] NFI enabled={nfi.enabled}, activeInHierarchy={nfi.gameObject.activeInHierarchy}");
+                    rightNearFarInteractor.enableUIInteraction = true;
+                    onUIHoverEntered = _ => isOverUI = true;
+                    onUIHoverExited = _ => isOverUI = false;
+                    rightNearFarInteractor.uiHoverEntered.AddListener(onUIHoverEntered);
+                    rightNearFarInteractor.uiHoverExited.AddListener(onUIHoverExited);
 
                     if (!nfi.gameObject.activeInHierarchy)
                     {
@@ -128,29 +142,15 @@ public class ConnectionManager : MonoBehaviour
                         Debug.Log("[CM] Activated NearFarInteractor GameObject");
                     }
 
-                    Debug.Log($"[CM] NFI interactionLayers: {nfi.interactionLayers.value}, selectInputRef: {nfi.selectInput?.inputActionReferencePerformed?.action?.name ?? "null"}");
-                    if (nfi.farInteractionCaster != null)
-                        Debug.Log($"[CM] NFI farCaster type: {nfi.farInteractionCaster.GetType().Name}");
-
                     var caster = nfi.farInteractionCaster as CurveInteractionCaster;
                     if (caster != null)
                     {
                         caster.raycastMask |= 1 << 3;
-                        var oldDist = caster.castDistance;
                         caster.castDistance = 25f;
-                        Debug.Log($"[CM] CurveCaster: mask={caster.raycastMask.value}, castDist {oldDist} -> {caster.castDistance}");
                     }
                     else
                     {
                         Debug.LogWarning("[CM] farInteractionCaster is not CurveInteractionCaster");
-                    }
-
-                    var block = FindObjectOfType<MoveCode>();
-                    if (block != null)
-                    {
-                        var grab = block.GetComponent<XRGrabInteractable>();
-                        Debug.Log($"[CM] Block '{block.name}' layer: {LayerMask.LayerToName(block.gameObject.layer)} ({block.gameObject.layer})");
-                        Debug.Log($"[CM] Block GrabInteractable interactionLayers: {grab.interactionLayers.value}");
                     }
                     return;
                 }
@@ -190,6 +190,33 @@ public class ConnectionManager : MonoBehaviour
         UpdateAllConnectionLines();
     }
 
+    private void SetupXRIUI()
+    {
+        var canvas = FindObjectOfType<Canvas>();
+        if (canvas != null && canvas.GetComponent<TrackedDeviceGraphicRaycaster>() == null)
+        {
+            canvas.gameObject.AddComponent<TrackedDeviceGraphicRaycaster>();
+            Debug.Log("[CM] Added TrackedDeviceGraphicRaycaster to Canvas");
+        }
+
+        var eventSystem = FindObjectOfType<EventSystem>();
+        if (eventSystem != null)
+        {
+            var standaloneModule = eventSystem.GetComponent<StandaloneInputModule>();
+            if (standaloneModule != null)
+            {
+                standaloneModule.enabled = false;
+                Debug.Log("[CM] Disabled StandaloneInputModule");
+            }
+
+            if (eventSystem.GetComponent<XRUIInputModule>() == null)
+            {
+                eventSystem.gameObject.AddComponent<XRUIInputModule>();
+                Debug.Log("[CM] Added XRUIInputModule to EventSystem");
+            }
+        }
+    }
+
     private void OnActivatePerformed(InputAction.CallbackContext ctx)
     {
         HandleActivatePress();
@@ -218,14 +245,17 @@ public class ConnectionManager : MonoBehaviour
 
     private void HandleActivatePress()
     {
+        if (isOverUI)
+            return;
+
+        if (!TryGetRay(out Ray ray))
+            return;
+
         if (codeManager != null && codeManager.IsExecuting)
         {
             Debug.Log("[CM] Blocked: code executing");
             return;
         }
-
-        if (!TryGetRay(out Ray ray))
-            return;
 
         int hitCount = Physics.RaycastNonAlloc(ray, hitBuffer, maxPreviewDistance, blockLayerMask);
         Code hitBlock = null;
@@ -242,7 +272,6 @@ public class ConnectionManager : MonoBehaviour
 
         if (hitBlock == null)
         {
-            Debug.Log($"[CM] Hit nothing (ray hit {hitCount} objects, no Code)");
         }
         else if (!IsConnectable(hitBlock))
         {
@@ -496,8 +525,6 @@ public class ConnectionManager : MonoBehaviour
         GameObject arrowhead = ArrowheadGenerator.CreateArrowhead(lineObj.transform, connectionLineMaterial);
         PlaceArrowheadOnSurface(from, to, arrowhead);
 
-        Debug.Log($"[CM] Created line '{from.name}'->'{to.name}' center={from.transform.position}->{to.transform.position} arrowhead={arrowhead?.transform.position}");
-
         connections.Add(new ConnectionData
         {
             from = from,
@@ -580,8 +607,6 @@ public class ConnectionManager : MonoBehaviour
 
             Vector3 startPos = data.from.transform.position;
             Vector3 endPos = data.to.transform.position;
-
-            Debug.DrawLine(startPos, endPos, Color.yellow);
 
             data.line.SetPosition(0, startPos);
             data.line.SetPosition(1, endPos);

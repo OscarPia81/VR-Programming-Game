@@ -20,13 +20,8 @@ public class CodeManager : MonoBehaviour
     public static GameObject Robot { get; private set; }
     public static Animator RobotAnimator { get; private set; }
     public static Transform RobotTarget { get; private set; }
-
-    private ScreenController screen;
-
     private void Awake()
     {
-        screen = FindObjectOfType<ScreenController>();
-
         if (robot != null)
         {
             Robot = robot;
@@ -80,8 +75,6 @@ public class CodeManager : MonoBehaviour
             cur.OnComplete += handler;
 
             cur.SetHighlight(true);
-
-            Debug.Log($"执行【{cur.GetType().Name}】");
 
             cur.work();
 
@@ -250,11 +243,11 @@ public class CodeManager : MonoBehaviour
             if (errors.Count > 0)
             {
                 var msg = string.Join("\n", errors.ConvertAll(e => e.message));
-                screen?.UpdateText(msg);
+                MenuManager.Instance?.SetStatus(msg);
                 Debug.LogWarning($"[CM] Validation failed:\n{msg}");
                 return;
             }
-            screen?.ClearScreen();
+            MenuManager.Instance?.ClearStatus();
 
             loopStack.Clear();
             ResetAllBlocks();

@@ -10,10 +10,4 @@ public class Star : MonoBehaviour
         collected = true;
         gameObject.SetActive(false);
     }
-
-    public void Reset()
-    {
-        collected = false;
-        gameObject.SetActive(true);
-    }
 }
