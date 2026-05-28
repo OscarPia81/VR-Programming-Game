@@ -37,6 +37,25 @@ public class LevelManager : MonoBehaviour
         codeManager = FindObjectOfType<CodeManager>();
     }
 
+    private void Start()
+    {
+        GeneratePlayground();
+    }
+
+    private void GeneratePlayground()
+    {
+        Vector2Int size = new Vector2Int(10, 10);
+        GenerateGrid(size);
+
+        if (CodeManager.Robot != null)
+        {
+            Vector3 origin = GridOrigin(size);
+            Vector3 pos = origin + new Vector3(4 * cellSize + cellSize * 0.5f, 0f, 4 * cellSize + cellSize * 0.5f);
+            CodeManager.Robot.transform.position = new Vector3(pos.x, gridCenter.y, pos.z);
+            CodeManager.Robot.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+        }
+    }
+
     public void LoadLevelByIndex(int index)
     {
         if (index < 0 || index >= levels.Count) return;
@@ -69,6 +88,22 @@ public class LevelManager : MonoBehaviour
         if (codeManager != null && codeManager.IsExecuting)
             codeManager.StopExecution();
         ClearLevel();
+        GeneratePlayground();
+    }
+
+    public bool IsWithinGrid(Vector3 worldPos)
+    {
+        Vector2Int size = levelActive
+            ? (gridSize.x > 0 && gridSize.y > 0 ? gridSize : currentLevelData.gridSize)
+            : new Vector2Int(10, 10);
+
+        Vector3 origin = GridOrigin(size);
+        float halfCell = cellSize * 0.5f;
+
+        return worldPos.x >= origin.x + halfCell
+            && worldPos.x <= origin.x + size.x * cellSize - halfCell
+            && worldPos.z >= origin.z + halfCell
+            && worldPos.z <= origin.z + size.y * cellSize - halfCell;
     }
 
     public void CollectStar(Star star)

@@ -12,11 +12,18 @@ public class MoveCode : Code
     override public void work()
     {
         if (isMoving) return;
-        isMoving = true;
-        movedDistance = 0f;
         moveDirection = CodeManager.RobotTarget.forward;
         moveTargetDistance = LevelManager.Instance != null ? LevelManager.Instance.cellSize : 1f;
         targetPosition = CodeManager.RobotTarget.position + moveDirection * moveTargetDistance;
+
+        if (LevelManager.Instance != null && !LevelManager.Instance.IsWithinGrid(targetPosition))
+        {
+            Complete();
+            return;
+        }
+
+        isMoving = true;
+        movedDistance = 0f;
 
         if (CodeManager.RobotAnimator != null)
         {
