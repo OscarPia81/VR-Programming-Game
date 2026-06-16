@@ -1,4 +1,0 @@
-repository "Alzheimer experience System@tj_salt53@cloud.cn"
-  path "/"
-    br "/main"
-    co "/main"

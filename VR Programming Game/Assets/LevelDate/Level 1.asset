@@ -13,9 +13,8 @@ MonoBehaviour:
   m_Name: Level 1
   m_EditorClassIdentifier: 
   levelNumber: 1
-  gridSize: {x: 10, y: 10}
+  gridSize: {x: 5, y: 5}
   robotStart: {x: 0, y: 0}
   robotFacing: 0
   starPositions:
-  - {x: 1, y: 1}
-  - {x: 5, y: 5}
+  - {x: 2, y: 2}
