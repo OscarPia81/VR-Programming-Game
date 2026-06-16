@@ -12,12 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3aab80f7b03707f4ba25e9de653bf3be, type: 3}
   m_Name: Level 6
   m_EditorClassIdentifier: 
-  levelNumber: 0
-  gridSize: {x: 10, y: 10}
+  levelNumber: 6
+  gridSize: {x: 7, y: 7}
   robotStart: {x: 0, y: 0}
-  robotFacing: 0
+  robotFacing: 1
   starPositions:
-  - {x: 3, y: 0}
-  - {x: 3, y: 3}
-  - {x: 0, y: 3}
-  - {x: 0, y: 0}
+  - {x: 1, y: 0}
+  - {x: 1, y: 2}
+  - {x: 3, y: 2}
+  - {x: 3, y: 4}
+  - {x: 5, y: 4}

@@ -86,20 +86,38 @@ public class MenuManager : MonoBehaviour
         HideAll();
         if (levelSelectPanel != null) levelSelectPanel.SetActive(true);
 
-        foreach (Transform child in levelButtonContainer)
-            Destroy(child.gameObject);
+        var leftColumn = levelButtonContainer.Find("LeftColumn");
+        var rightColumn = levelButtonContainer.Find("RightColumn");
+
+        if (leftColumn != null && rightColumn != null)
+        {
+            foreach (Transform child in leftColumn)
+                Destroy(child.gameObject);
+            foreach (Transform child in rightColumn)
+                Destroy(child.gameObject);
+        }
+        else
+        {
+            foreach (Transform child in levelButtonContainer)
+                Destroy(child.gameObject);
+        }
 
         if (levelButtonPrefab != null)
         {
-            foreach (var level in levelManager.levels)
+            for (int i = 0; i < levelManager.levels.Count; i++)
             {
-                var btnObj = Instantiate(levelButtonPrefab, levelButtonContainer);
+                var level = levelManager.levels[i];
+                Transform parent = levelButtonContainer;
+                if (leftColumn != null && rightColumn != null)
+                    parent = i < 10 ? leftColumn : rightColumn;
+
+                var btnObj = Instantiate(levelButtonPrefab, parent);
                 var text = btnObj.GetComponentInChildren<TMP_Text>();
                 if (text != null) text.text = $"Level {level.levelNumber}";
                 var btn = btnObj.GetComponent<Button>();
                 if (btn != null)
                 {
-                    int index = levelManager.levels.IndexOf(level);
+                    int index = i;
                     btn.onClick.AddListener(() => OnLevelSelected(index));
                 }
             }

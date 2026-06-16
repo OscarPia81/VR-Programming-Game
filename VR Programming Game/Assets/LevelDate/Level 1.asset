@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 1
   gridSize: {x: 5, y: 5}
   robotStart: {x: 0, y: 0}
-  robotFacing: 0
+  robotFacing: 1
   starPositions:
-  - {x: 2, y: 2}
+  - {x: 2, y: 0}

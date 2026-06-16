@@ -12,27 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3aab80f7b03707f4ba25e9de653bf3be, type: 3}
   m_Name: Level 8
   m_EditorClassIdentifier: 
-  levelNumber: 0
-  gridSize: {x: 10, y: 10}
-  robotStart: {x: 0, y: 0}
-  robotFacing: 0
+  levelNumber: 8
+  gridSize: {x: 7, y: 7}
+  robotStart: {x: 0, y: 3}
+  robotFacing: 1
   starPositions:
-  - {x: 1, y: 0}
-  - {x: 2, y: 0}
-  - {x: 3, y: 0}
-  - {x: 4, y: 0}
-  - {x: 4, y: 1}
-  - {x: 3, y: 1}
-  - {x: 2, y: 1}
-  - {x: 1, y: 1}
-  - {x: 0, y: 1}
-  - {x: 0, y: 2}
-  - {x: 1, y: 2}
-  - {x: 2, y: 2}
-  - {x: 3, y: 2}
-  - {x: 4, y: 2}
-  - {x: 4, y: 3}
-  - {x: 3, y: 3}
-  - {x: 2, y: 3}
   - {x: 1, y: 3}
-  - {x: 0, y: 3}
+  - {x: 2, y: 3}
+  - {x: 3, y: 3}
+  - {x: 4, y: 3}
+  - {x: 5, y: 3}
+  - {x: 6, y: 3}
