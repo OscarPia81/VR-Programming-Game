@@ -24,10 +24,12 @@ public class LevelManager : MonoBehaviour
     public int nextStarIndex { get; private set; }
     public int currentLevelIndex { get; private set; }
     public LevelData currentLevelData => levels[currentLevelIndex];
+    public bool IsLevelActive => levelActive;
 
     private GameObject gridParent;
     private MenuManager menu;
     private CodeManager codeManager;
+    private RobotFacingIndicator facingIndicator;
     private bool levelActive;
 
     private void Awake()
@@ -35,6 +37,9 @@ public class LevelManager : MonoBehaviour
         Instance = this;
         menu = FindObjectOfType<MenuManager>();
         codeManager = FindObjectOfType<CodeManager>();
+        facingIndicator = GetComponent<RobotFacingIndicator>();
+        if (facingIndicator == null)
+            facingIndicator = gameObject.AddComponent<RobotFacingIndicator>();
     }
 
     private void Start()
@@ -75,6 +80,8 @@ public class LevelManager : MonoBehaviour
         SpawnStars(data, size);
         PlaceRobot(data, size);
         levelActive = true;
+        facingIndicator?.Show();
+        LevelBlockHintDisplay.Instance?.Show(data);
     }
 
     public void ReloadLevel()
@@ -85,6 +92,8 @@ public class LevelManager : MonoBehaviour
     public void StopLevel()
     {
         levelActive = false;
+        facingIndicator?.Hide();
+        LevelBlockHintDisplay.Instance?.Hide();
         if (codeManager != null && codeManager.IsExecuting)
             codeManager.StopExecution();
         ClearLevel();

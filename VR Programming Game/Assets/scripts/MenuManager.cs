@@ -36,11 +36,15 @@ public class MenuManager : MonoBehaviour
 
     private LevelManager levelManager;
     private int pendingLevelIndex;
+    private LevelBlockHintDisplay blockHintDisplay;
 
     private void Start()
     {
         Instance = this;
         levelManager = FindObjectOfType<LevelManager>();
+        blockHintDisplay = GetComponent<LevelBlockHintDisplay>();
+        if (blockHintDisplay == null)
+            blockHintDisplay = gameObject.AddComponent<LevelBlockHintDisplay>();
         BindButtons();
         ShowTitle();
     }
@@ -72,6 +76,7 @@ public class MenuManager : MonoBehaviour
         if (inLevelPanel != null) inLevelPanel.SetActive(false);
         if (levelCompletePanel != null) levelCompletePanel.SetActive(false);
         if (levelFailedPanel != null) levelFailedPanel.SetActive(false);
+        blockHintDisplay?.Hide();
     }
 
     public void ShowTitle()
@@ -129,6 +134,7 @@ public class MenuManager : MonoBehaviour
         HideAll();
         if (inLevelPanel != null) inLevelPanel.SetActive(true);
         UpdateLevelName();
+        blockHintDisplay?.Show(levelManager.currentLevelData);
     }
 
     public void ShowLevelComplete()

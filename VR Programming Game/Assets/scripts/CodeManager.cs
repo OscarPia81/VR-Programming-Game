@@ -249,6 +249,9 @@ public class CodeManager : MonoBehaviour
             }
             MenuManager.Instance?.ClearStatus();
 
+            RobotFacingIndicator.Instance?.Hide();
+            LevelBlockHintDisplay.Instance?.Hide();
+
             loopStack.Clear();
             ResetAllBlocks();
             playRoutine = StartCoroutine(PlayCoroutine());
@@ -257,6 +260,8 @@ public class CodeManager : MonoBehaviour
         {
             StopExecution();
             ResetAllBlocks();
+            if (LevelManager.Instance != null && LevelManager.Instance.IsLevelActive)
+                LevelBlockHintDisplay.Instance?.Show(LevelManager.Instance.currentLevelData);
         }
     }
 
