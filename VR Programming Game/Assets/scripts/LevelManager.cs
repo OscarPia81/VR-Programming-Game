@@ -82,6 +82,7 @@ public class LevelManager : MonoBehaviour
         levelActive = true;
         facingIndicator?.Show();
         LevelBlockHintDisplay.Instance?.Show(data);
+        AudioManager.Instance?.Play(SoundId.LevelEnter);
     }
 
     public void ReloadLevel()
@@ -125,6 +126,7 @@ public class LevelManager : MonoBehaviour
             return;
         }
 
+        AudioManager.Instance?.PlayStarCollect(star.orderIndex, star.transform.position);
         star.Collect();
         nextStarIndex++;
 
