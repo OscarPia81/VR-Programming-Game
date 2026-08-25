@@ -244,6 +244,7 @@ public class CodeManager : MonoBehaviour
             {
                 var msg = string.Join("\n", errors.ConvertAll(e => e.message));
                 MenuManager.Instance?.SetStatus(msg);
+                AudioManager.Instance?.Play(SoundId.ValidationFail);
                 Debug.LogWarning($"[CM] Validation failed:\n{msg}");
                 return;
             }
@@ -254,6 +255,11 @@ public class CodeManager : MonoBehaviour
 
             loopStack.Clear();
             ResetAllBlocks();
+            AudioManager.Instance?.Play(SoundId.ProgramStart);
+            if (Robot != null)
+                AudioManager.Instance?.Play(SoundId.RobotBoot, Robot.transform.position);
+            else
+                AudioManager.Instance?.Play(SoundId.RobotBoot);
             playRoutine = StartCoroutine(PlayCoroutine());
         }
         else
