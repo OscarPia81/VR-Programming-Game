@@ -9,6 +9,8 @@ using UnityEngine.XR.Interaction.Toolkit.UI;
 
 public class ConnectionManager : MonoBehaviour
 {
+    public static ConnectionManager Instance { get; private set; }
+
     [Header("Input")]
     public InputActionAsset inputActions;
 
@@ -47,6 +49,11 @@ public class ConnectionManager : MonoBehaviour
         public Code to;
         public LineRenderer line;
         public GameObject arrowhead;
+    }
+
+    private void Awake()
+    {
+        Instance = this;
     }
 
     private void Start()
@@ -103,6 +110,9 @@ public class ConnectionManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (Instance == this)
+            Instance = null;
+
         if (rightActivateAction != null)
         {
             rightActivateAction.performed -= OnActivatePerformed;
@@ -636,5 +646,50 @@ public class ConnectionManager : MonoBehaviour
 
         arrowhead.transform.position = midPoint;
         arrowhead.transform.rotation = Quaternion.LookRotation(direction);
+    }
+
+    public void CleanupBlock(Code block)
+    {
+        if (block == null)
+            return;
+
+        if (selectedBlock == block)
+            DeselectBlock();
+
+        Disconnect(block);
+
+        foreach (var other in FindObjectsOfType<Code>())
+        {
+            if (other.next == block)
+                Disconnect(other);
+        }
+
+        foreach (var whileBlock in FindObjectsOfType<While>())
+        {
+            if (whileBlock.Judger == block)
+                DisconnectJudger(whileBlock);
+        }
+
+        foreach (var ifBlock in FindObjectsOfType<If>())
+        {
+            if (ifBlock.Judger == block)
+                DisconnectJudger(ifBlock);
+        }
+
+        RemoveAllLinesForBlock(block);
+    }
+
+    private void RemoveAllLinesForBlock(Code block)
+    {
+        for (int i = connections.Count - 1; i >= 0; i--)
+        {
+            if (connections[i].from != block && connections[i].to != block)
+                continue;
+
+            if (connections[i].line != null)
+                Destroy(connections[i].line.gameObject);
+
+            connections.RemoveAt(i);
+        }
     }
 }

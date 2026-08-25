@@ -68,6 +68,7 @@ public class LevelManager : MonoBehaviour
         if (codeManager != null && codeManager.IsExecuting)
             codeManager.StopExecution();
 
+        CodeBlockBoard.Instance?.ClearWorkspace();
         ClearLevel();
 
         currentLevelIndex = index;
@@ -96,6 +97,7 @@ public class LevelManager : MonoBehaviour
         LevelBlockHintDisplay.Instance?.Hide();
         if (codeManager != null && codeManager.IsExecuting)
             codeManager.StopExecution();
+        CodeBlockBoard.Instance?.ClearWorkspace();
         ClearLevel();
         GeneratePlayground();
     }
